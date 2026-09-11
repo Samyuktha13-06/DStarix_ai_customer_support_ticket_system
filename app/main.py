@@ -1,35 +1,32 @@
 # pyrefly: ignore [missing-import]
 from fastapi import FastAPI
 
-from app.core.config import get_settings
-from app.core.logging_config import setup_logging
-
-
-settings = get_settings()
-
-setup_logging(settings.log_level)
+from app.api.chat import router as chat_router
 
 
 app = FastAPI(
-    title=settings.app_name,
+    title="NovaCart AI Customer Support",
     description=(
-        "AI-powered customer support and "
-        "ticket automation system"
+        "AI-powered customer support system using "
+        "RAG and Groq."
     ),
     version="0.1.0",
 )
 
 
+app.include_router(chat_router)
+
+
 @app.get("/")
 def root():
     return {
-        "message": "AI Customer Support System is running",
-        "environment": settings.app_env,
+        "message": "NovaCart AI Customer Support API",
+        "status": "running",
     }
 
 
 @app.get("/health")
-def health_check():
+def health():
     return {
         "status": "healthy",
     }

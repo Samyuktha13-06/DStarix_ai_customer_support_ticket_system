@@ -77,3 +77,55 @@ Each chunk stores metadata including:
 - File path
 - File type
 - Chunk ID
+
+
+### RAG + Groq Generation integration
+
+The RAG + Groq Generation integration connects the Phase 3 retrieval pipeline to a Groq-powered
+large language model.
+
+The system follows:
+
+Customer Query
+    ↓
+Semantic Retrieval
+    ↓
+ChromaDB
+    ↓
+Relevant Knowledge Base Chunks
+    ↓
+Grounded Prompt
+    ↓
+Groq LLM
+    ↓
+Customer Response + Source References
+
+### Grounding
+
+The LLM is instructed to answer using only retrieved NovaCart
+knowledge-base content.
+
+If sufficient information cannot be found, the assistant is
+instructed not to invent an answer.
+
+### API
+
+POST /chat
+
+Example request:
+
+{
+    "message": "What is the refund policy?"
+}
+
+Example response:
+
+{
+    "answer": "...",
+    "sources": [
+        {
+            "source": "refund_policy.md",
+            "chunk_id": 12
+        }
+    ]
+}

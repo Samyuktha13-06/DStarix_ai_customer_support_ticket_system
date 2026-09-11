@@ -15,7 +15,7 @@ def test_root():
     data = response.json()
 
     assert data["message"] == (
-        "AI Customer Support System is running"
+        "NovaCart AI Customer Support API"
     )
 
 
