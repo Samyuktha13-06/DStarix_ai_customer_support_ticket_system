@@ -18,7 +18,7 @@ env/
 
 # Vector stores
 data/chroma/
-
+data/novacart.db
 # Logs
 *.log
 logs/
