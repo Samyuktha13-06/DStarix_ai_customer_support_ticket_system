@@ -1,6 +1,6 @@
-from datetime import datetime
-
+from datetime import datetime, date
 from sqlalchemy import (
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -82,6 +82,11 @@ class Order(Base):
 
     tracking_number: Mapped[str | None] = mapped_column(
         String(100),
+        nullable=True,
+    )
+
+    expected_delivery_date: Mapped[date | None] = mapped_column(
+        Date,
         nullable=True,
     )
 
