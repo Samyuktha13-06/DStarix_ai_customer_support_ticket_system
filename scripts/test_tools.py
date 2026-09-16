@@ -15,6 +15,10 @@ from app.tools.support_tools import (
     create_support_ticket,escalate_to_human
 )
 
+from app.tools.rag_tools import (
+    search_knowledge_base,
+)
+
 
 def main() -> None:
 
@@ -102,6 +106,18 @@ def main() -> None:
 
     print(escalation_result)
 
+
+
+    print("\nKNOWLEDGE BASE SEARCH")
+    print("=" * 60)
+
+    result = search_knowledge_base.invoke(
+        {
+            "query": "What is the refund policy?"
+        }
+    )
+
+    print(result)
 
 if __name__ == "__main__":
     main()
