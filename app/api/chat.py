@@ -1,10 +1,11 @@
-# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, HTTPException
-# pyrefly: ignore [missing-import]
 from pydantic import BaseModel, Field
+import sys
+from pathlib import Path
 
-from app.services.rag_generation_service import (
-    get_rag_generation_service,
+sys.path.append(str(Path(__file__).parent.parent))
+from app.services.agent_service import (
+    get_agent_service,
 )
 
 
@@ -23,16 +24,9 @@ class ChatRequest(BaseModel):
     )
 
 
-class SourceReference(BaseModel):
-
-    source: str | None = None
-    chunk_id: int | None = None
-
-
 class ChatResponse(BaseModel):
 
     answer: str
-    sources: list[SourceReference]
 
 
 @router.post(
@@ -43,16 +37,14 @@ def chat(request: ChatRequest):
 
     try:
 
-        service = get_rag_generation_service()
+        service = get_agent_service()
 
-        result = service.generate_answer(
-            query=request.message,
-            top_k=4,
+        result = service.chat(
+            message=request.message
         )
 
         return ChatResponse(
-            answer=result["answer"],
-            sources=result["sources"],
+            answer=result["answer"]
         )
 
     except ValueError as exc:
@@ -67,7 +59,7 @@ def chat(request: ChatRequest):
         raise HTTPException(
             status_code=500,
             detail=(
-                "The customer-support service "
+                "The customer-support agent "
                 "encountered an unexpected error."
             ),
         ) from exc

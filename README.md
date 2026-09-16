@@ -14,9 +14,6 @@ An AI-powered customer support system that combines:
 - Vector database
 - Application database
 
-## Current Status
-
-Phase 1 - Project setup and backend foundation.
 
 ## Technology Stack
 
@@ -79,7 +76,7 @@ Each chunk stores metadata including:
 - Chunk ID
 
 
-### RAG + Groq Generation integration
+## RAG + Groq Generation integration
 
 The RAG + Groq Generation integration connects the Phase 3 retrieval pipeline to a Groq-powered
 large language model.
@@ -108,7 +105,7 @@ knowledge-base content.
 If sufficient information cannot be found, the assistant is
 instructed not to invent an answer.
 
-### API
+## API
 
 POST /chat
 
@@ -129,3 +126,33 @@ Example response:
         }
     ]
 }
+
+
+## Agent Architecture
+
+The `/chat` endpoint is powered by a LangGraph agent.
+
+The agent can dynamically select between:
+
+- Knowledge-base retrieval
+- Order lookup
+- Payment lookup
+- Delivery lookup
+- Support ticket creation
+- Human escalation
+
+The agent follows a tool-calling loop:
+
+User Query
+    ↓
+LangGraph Agent
+    ↓
+Tool Selection
+    ↓
+Tool Execution
+    ↓
+Tool Result
+    ↓
+Agent
+    ↓
+Final Response

@@ -1,4 +1,3 @@
-# pyrefly: ignore [missing-import]
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -37,7 +36,17 @@ def test_empty_chat_message_is_rejected():
     assert response.status_code == 422
 
 
-def test_chat_request_schema():
+def test_whitespace_chat_message_is_rejected():
+
+    response = client.post(
+        "/chat",
+        json={"message": "   "},
+    )
+
+    assert response.status_code == 400
+
+
+def test_chat_returns_answer():
 
     response = client.post(
         "/chat",
@@ -53,5 +62,5 @@ def test_chat_request_schema():
     data = response.json()
 
     assert "answer" in data
-    assert "sources" in data
-    assert isinstance(data["sources"], list)
+    assert isinstance(data["answer"], str)
+    assert len(data["answer"]) > 0
