@@ -4,43 +4,29 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
-from app.services.agent_service import (
-    get_agent_service,
-)
+from app.services.agent_service import get_agent_service
 
 
-router = APIRouter(
-    prefix="/chat",
-    tags=["Chat"],
-)
+router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
 class ChatRequest(BaseModel):
-
-    message: str = Field(
-        ...,
-        min_length=1,
-        max_length=2000,
-    )
+    message: str = Field(..., min_length=1, max_length=2000)
+    thread_id: str = Field(..., min_length=1, max_length=100)
 
 
 class ChatResponse(BaseModel):
-
     answer: str
 
 
-@router.post(
-    "",
-    response_model=ChatResponse,
-)
+@router.post("", response_model=ChatResponse)
 def chat(request: ChatRequest):
-
     try:
-
         service = get_agent_service()
 
         result = service.chat(
-            message=request.message
+            message=request.message,
+            thread_id=request.thread_id,
         )
 
         return ChatResponse(
@@ -48,14 +34,12 @@ def chat(request: ChatRequest):
         )
 
     except ValueError as exc:
-
         raise HTTPException(
             status_code=400,
             detail=str(exc),
         ) from exc
 
     except Exception as exc:
-
         raise HTTPException(
             status_code=500,
             detail=(
