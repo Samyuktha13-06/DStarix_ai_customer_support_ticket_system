@@ -1,5 +1,9 @@
 from langchain_core.tools import tool
+import sys
 
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
 from app.database.database import SessionLocal
 from app.services.order_service import get_order_service
 
@@ -7,25 +11,17 @@ from app.services.order_service import get_order_service
 @tool
 def check_order_status(order_id: int) -> dict:
     """
-    Check the current status and details of a NovaCart order.
-
-    Use this tool when a customer asks about an order,
-    including whether it is processing, shipped, delivered,
-    cancelled, or failed.
+    Check the current status and details of a customer order.
     """
-
-    if order_id <= 0:
-        return {
-            "success": False,
-            "error": "Order ID must be a positive integer.",
-        }
-
-    service = get_order_service()
 
     try:
         with SessionLocal() as db:
 
-            order = service.get_order(
+            # Get the service object first.
+            order_service = get_order_service()
+
+            # Then call the service method.
+            order = order_service.get_order(
                 db=db,
                 order_id=order_id,
             )
@@ -33,64 +29,43 @@ def check_order_status(order_id: int) -> dict:
             if order is None:
                 return {
                     "success": False,
-                    "error": (
-                        f"Order {order_id} was not found."
-                    ),
+                    "error": f"Order {order_id} was not found.",
                 }
 
             return {
                 "success": True,
-                "order": {
-                    "order_id": order.id,
-                    "customer_id": order.customer_id,
-                    "product": order.product,
-                    "amount": order.amount,
-                    "status": order.status,
-                    "tracking_number": (
-                        order.tracking_number
-                    ),
-                    "order_date": (
-                        order.order_date.isoformat()
-                    ),
-                    "expected_delivery_date": (
-                        order.expected_delivery_date.isoformat()
-                        if order.expected_delivery_date
-                        else None
-                    ),
-                },
+                "order_id": order.id,
+                "customer_id": order.customer_id,
+                "product": order.product,
+                "amount": float(order.amount),
+                "status": order.status,
+                "tracking_number": order.tracking_number,
+                "expected_delivery_date": (
+                    str(order.expected_delivery_date)
+                    if order.expected_delivery_date
+                    else None
+                ),
             }
 
-    except Exception:
+    except Exception as exc:
         return {
             "success": False,
-            "error": (
-                "Unable to retrieve order information "
-                "at this time."
-            ),
+            "error": str(exc),
         }
+
 
 @tool
 def get_delivery_status(order_id: int) -> dict:
     """
-    Get delivery and tracking information for a NovaCart order.
-
-    Use this tool when a customer asks where an order is,
-    whether it has shipped, when it is expected to arrive,
-    or asks for tracking information.
+    Get delivery information for an order.
     """
-
-    if order_id <= 0:
-        return {
-            "success": False,
-            "error": "Order ID must be a positive integer.",
-        }
-
-    service = get_order_service()
 
     try:
         with SessionLocal() as db:
 
-            order = service.get_order(
+            order_service = get_order_service()
+
+            order = order_service.get_order(
                 db=db,
                 order_id=order_id,
             )
@@ -98,32 +73,24 @@ def get_delivery_status(order_id: int) -> dict:
             if order is None:
                 return {
                     "success": False,
-                    "error": (
-                        f"Order {order_id} was not found."
-                    ),
+                    "error": f"Order {order_id} was not found.",
                 }
 
             return {
                 "success": True,
-                "delivery": {
-                    "order_id": order.id,
-                    "status": order.status,
-                    "tracking_number": (
-                        order.tracking_number
-                    ),
-                    "expected_delivery_date": (
-                        order.expected_delivery_date.isoformat()
-                        if order.expected_delivery_date
-                        else None
-                    ),
-                },
+                "order_id": order.id,
+                "customer_id": order.customer_id,
+                "status": order.status,
+                "tracking_number": order.tracking_number,
+                "expected_delivery_date": (
+                    str(order.expected_delivery_date)
+                    if order.expected_delivery_date
+                    else None
+                ),
             }
 
-    except Exception:
+    except Exception as exc:
         return {
             "success": False,
-            "error": (
-                "Unable to retrieve delivery information "
-                "at this time."
-            ),
-        }        
+            "error": str(exc),
+        }

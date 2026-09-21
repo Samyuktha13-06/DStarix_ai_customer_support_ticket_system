@@ -1,80 +1,67 @@
-from sqlalchemy import select
 from sqlalchemy.orm import Session
+import sys
+from pathlib import Path
 
+sys.path.append(str(Path(__file__).parent.parent))
 from app.database.models import Ticket
 
 
-class TicketService:
+ALLOWED_PRIORITIES = {
+    "low",
+    "normal",
+    "high",
+    "urgent",
+}
 
-    def create_ticket(
-        self,
-        db: Session,
-        customer_id: int,
-        subject: str,
-        description: str,
-        priority: str = "normal",
-        order_id: int | None = None,
-    ) -> Ticket:
 
-        if customer_id <= 0:
-            raise ValueError(
-                "Customer ID must be a positive integer."
-            )
+def create_ticket(
+    db: Session,
+    customer_id: int,
+    subject: str,
+    description: str,
+    priority: str = "normal",
+    order_id: int | None = None,
+) -> Ticket:
 
-        if not subject.strip():
-            raise ValueError(
-                "Ticket subject cannot be empty."
-            )
+    if customer_id <= 0:
+        raise ValueError("Customer ID must be positive.")
 
-        if not description.strip():
-            raise ValueError(
-                "Ticket description cannot be empty."
-            )
+    if not subject or not subject.strip():
+        raise ValueError("Ticket subject cannot be empty.")
 
-        allowed_priorities = {
-            "low",
-            "normal",
-            "high",
-            "urgent",
-        }
+    if not description or not description.strip():
+        raise ValueError("Ticket description cannot be empty.")
 
-        if priority not in allowed_priorities:
-            raise ValueError(
-                "Invalid ticket priority."
-            )
+    priority = priority.lower().strip()
 
-        ticket = Ticket(
-            customer_id=customer_id,
-            order_id=order_id,
-            subject=subject.strip(),
-            description=description.strip(),
-            priority=priority,
-            status="open",
+    if priority not in ALLOWED_PRIORITIES:
+        raise ValueError(
+            f"Invalid priority. Allowed values: "
+            f"{', '.join(sorted(ALLOWED_PRIORITIES))}"
         )
 
-        db.add(ticket)
-        db.commit()
-        db.refresh(ticket)
+    ticket = Ticket(
+        customer_id=customer_id,
+        order_id=order_id,
+        subject=subject.strip(),
+        description=description.strip(),
+        priority=priority,
+        status="open",
+    )
 
-        return ticket
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
 
-    def get_ticket(
-        self,
-        db: Session,
-        ticket_id: int,
-    ) -> Ticket | None:
-
-        if ticket_id <= 0:
-            raise ValueError(
-                "Ticket ID must be a positive integer."
-            )
-
-        statement = select(Ticket).where(
-            Ticket.id == ticket_id
-        )
-
-        return db.scalar(statement)
+    return ticket
 
 
-def get_ticket_service() -> TicketService:
-    return TicketService()
+def get_ticket(
+    db: Session,
+    ticket_id: int,
+) -> Ticket | None:
+
+    if ticket_id <= 0:
+        raise ValueError("Ticket ID must be positive.")
+
+    return db.get(Ticket, ticket_id)

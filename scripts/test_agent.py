@@ -26,14 +26,17 @@ def main() -> None:
         print("=" * 80)
 
         result = graph.invoke(
-            {
-                "messages": [
-                    HumanMessage(
-                        content=query
-                    )
-                ]
+        {
+            "messages": [
+                HumanMessage(content=query)
+            ]
+        },
+        config={
+            "configurable": {
+                "thread_id": "test-agent-session"
             }
-        )
+        },
+    )
 
         messages = result["messages"]
 
