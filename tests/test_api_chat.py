@@ -48,7 +48,7 @@ def test_whitespace_message():
     )
 
     # Pydantic accepts whitespace because it has length,
-    # but AgentService should reject it.
+    # but AgentService rejects it.
     assert response.status_code == 400
 
 
@@ -76,11 +76,20 @@ def test_empty_thread_id():
 
 
 def test_basic_chat():
+    """
+    Test a normal customer-support question.
+
+    A normal question should return:
+    - an answer
+    - escalated = False
+    - ticket_id = None
+    """
+
     response = client.post(
         "/chat",
         json={
             "thread_id": "test-basic-chat",
-            "message": "Where is my order 45821?",
+            "message": "How long does standard delivery take?",
         },
     )
 
@@ -92,11 +101,17 @@ def test_basic_chat():
     assert isinstance(data["answer"], str)
     assert len(data["answer"]) > 0
 
+    assert "escalated" in data
+    assert data["escalated"] is False
+
+    assert "ticket_id" in data
+    assert data["ticket_id"] is None
+
 
 def test_conversation_follow_up():
     """
-    Test that the agent remembers context within
-    the same conversation thread.
+    Test that conversation memory works across
+    multiple requests using the same thread_id.
     """
 
     thread_id = "test-follow-up-45821"
@@ -115,9 +130,13 @@ def test_conversation_follow_up():
     data_1 = response_1.json()
 
     assert "answer" in data_1
+    assert isinstance(data_1["answer"], str)
     assert len(data_1["answer"]) > 0
 
-    # Second message does not mention the order ID.
+    assert data_1["escalated"] is False
+    assert data_1["ticket_id"] is None
+
+    # Second message refers to the previous order indirectly.
     response_2 = client.post(
         "/chat",
         json={
@@ -131,13 +150,17 @@ def test_conversation_follow_up():
     data_2 = response_2.json()
 
     assert "answer" in data_2
+    assert isinstance(data_2["answer"], str)
     assert len(data_2["answer"]) > 0
+
+    assert data_2["escalated"] is False
+    assert data_2["ticket_id"] is None
 
 
 def test_conversation_memory_isolation():
     """
-    Test that two different thread IDs maintain
-    separate conversation histories.
+    Test that different thread IDs maintain separate
+    conversation histories.
     """
 
     thread_1 = "test-isolation-customer-001"
@@ -196,10 +219,17 @@ def test_conversation_memory_isolation():
     assert len(answer_1) > 0
     assert len(answer_2) > 0
 
+    assert response_3.json()["escalated"] is False
+    assert response_4.json()["escalated"] is False
+
+    assert response_3.json()["ticket_id"] is None
+    assert response_4.json()["ticket_id"] is None
+
 
 def test_new_conversation_has_no_previous_context():
     """
-    A new thread should not inherit context from another thread.
+    A new thread should not inherit context from
+    an existing conversation.
     """
 
     old_thread = "test-old-conversation"
@@ -232,5 +262,108 @@ def test_new_conversation_has_no_previous_context():
     assert isinstance(answer, str)
     assert len(answer) > 0
 
-    # The new conversation should not inherit order 45821.
+    # The new conversation should not inherit the old order.
     assert "45821" not in answer
+
+    assert response_2.json()["escalated"] is False
+    assert response_2.json()["ticket_id"] is None
+
+
+def test_chat_escalation_returns_ticket_id():
+    """
+    Test that an automatically escalated issue returns
+    both escalation status and the generated ticket ID.
+    """
+
+    response = client.post(
+        "/chat",
+        json={
+            "thread_id": "test-api-escalation-45824",
+            "message": (
+                "I want to speak with a human support "
+                "representative about order 45824."
+            ),
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert "answer" in data
+    assert isinstance(data["answer"], str)
+    assert len(data["answer"]) > 0
+
+    assert "escalated" in data
+    assert data["escalated"] is True
+
+    assert "ticket_id" in data
+    assert data["ticket_id"] is not None
+    assert isinstance(data["ticket_id"], int)
+
+
+def test_payment_order_issue_escalates():
+    """
+    Test the important payment/order inconsistency scenario.
+
+    Order 45824 is Failed while its payment is Captured.
+    The agent should escalate the issue.
+    """
+
+    response = client.post(
+        "/chat",
+        json={
+            "thread_id": "test-api-payment-escalation-45824",
+            "message": (
+                "My payment was deducted but "
+                "my order 45824 failed."
+            ),
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert "answer" in data
+    assert isinstance(data["answer"], str)
+    assert len(data["answer"]) > 0
+
+    assert data["escalated"] is True
+
+    assert data["ticket_id"] is not None
+    assert isinstance(data["ticket_id"], int)
+
+
+def test_chat_response_structure():
+    """
+    Verify that every successful /chat response contains
+    the complete Phase 8.4 response structure.
+    """
+
+    response = client.post(
+        "/chat",
+        json={
+            "thread_id": "test-response-structure",
+            "message": "What is your cancellation policy?",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert set(data.keys()) == {
+        "answer",
+        "escalated",
+        "ticket_id",
+    }
+
+    assert isinstance(data["answer"], str)
+    assert isinstance(data["escalated"], bool)
+
+    if data["escalated"]:
+        assert data["ticket_id"] is not None
+        assert isinstance(data["ticket_id"], int)
+    else:
+        assert data["ticket_id"] is None
