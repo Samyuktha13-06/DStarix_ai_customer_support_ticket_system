@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 import sys
 from pathlib import Path
 
@@ -26,6 +26,26 @@ class ChatRequest(BaseModel):
         min_length=1,
         max_length=100,
     )
+
+    @field_validator("message")
+    @classmethod
+    def validate_message(cls, value: str) -> str:
+        value = value.strip()
+
+        if not value:
+            raise ValueError("Message cannot be empty or contain only whitespace.")
+
+        return value
+
+    @field_validator("thread_id")
+    @classmethod
+    def validate_thread_id(cls, value: str) -> str:
+        value = value.strip()
+
+        if not value:
+            raise ValueError("Thread ID cannot be empty or contain only whitespace.")
+
+        return value
 
 
 class ChatResponse(BaseModel):
