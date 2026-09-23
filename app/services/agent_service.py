@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
-
+from app.services.exceptions import AgentLLMError
 from app.agent.graph import build_agent_graph
 
 
@@ -89,16 +89,22 @@ class AgentService:
             }
         }
 
-        result = self.graph.invoke(
-            {
-                "messages": [
-                    HumanMessage(
-                        content=message.strip()
-                    )
-                ]
-            },
-            config=config,
-        )
+        try:
+            result = self.graph.invoke(
+                {
+                    "messages": [
+                        HumanMessage(
+                            content=message.strip()
+                        )
+            ]
+        },
+        config=config,
+    )
+
+        except Exception as exc:    
+            raise AgentLLMError(
+                "The AI support service is temporarily unavailable."
+            ) from exc
 
         messages = result.get("messages", [])
 

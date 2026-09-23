@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from app.services.agent_service import get_agent_service
-
+from app.services.exceptions import AgentLLMError
 
 router = APIRouter(
     prefix="/chat",
@@ -78,6 +78,13 @@ def chat(request: ChatRequest):
 
         raise HTTPException(
             status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except AgentLLMError as exc:
+
+        raise HTTPException(
+            status_code=503,
             detail=str(exc),
         ) from exc
 
