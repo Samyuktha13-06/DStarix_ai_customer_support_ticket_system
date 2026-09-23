@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, field_validator
 import sys
@@ -7,6 +8,8 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from app.services.agent_service import get_agent_service
 from app.services.exceptions import AgentLLMError
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/chat",
@@ -89,6 +92,9 @@ def chat(request: ChatRequest):
         ) from exc
 
     except Exception as exc:
+        logger.exception(
+            "An unexpected error occurred in the chat endpoint."
+        )
 
         raise HTTPException(
             status_code=500,

@@ -1,5 +1,5 @@
 import json
-
+import logging
 from langchain_core.messages import HumanMessage
 import sys
 from pathlib import Path
@@ -8,7 +8,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from app.services.exceptions import AgentLLMError
 from app.agent.graph import build_agent_graph
 
-
+logger = logging.getLogger(__name__)
 class AgentService:
 
     def __init__(self):
@@ -83,9 +83,17 @@ class AgentService:
                 "Thread ID cannot be empty."
             )
 
+        clean_message = message.strip()
+        clean_thread_id = thread_id.strip()
+
+        logger.info(
+            "Processing customer request | thread_id=%s",
+            clean_thread_id,
+        )
+
         config = {
             "configurable": {
-                "thread_id": thread_id.strip()
+                "thread_id": clean_thread_id
             }
         }
 
@@ -94,14 +102,19 @@ class AgentService:
                 {
                     "messages": [
                         HumanMessage(
-                            content=message.strip()
+                            content=clean_message
                         )
-            ]
-        },
-        config=config,
-    )
+                    ]
+                },
+                config=config,
+            )
 
-        except Exception as exc:    
+        except Exception as exc:
+            logger.exception(
+                "Agent graph execution failed | thread_id=%s",
+                clean_thread_id,
+            )
+
             raise AgentLLMError(
                 "The AI support service is temporarily unavailable."
             ) from exc
@@ -109,6 +122,11 @@ class AgentService:
         messages = result.get("messages", [])
 
         if not messages:
+            logger.error(
+                "Agent returned no messages | thread_id=%s",
+                clean_thread_id,
+            )
+
             raise RuntimeError(
                 "Agent returned no messages."
             )
@@ -117,6 +135,13 @@ class AgentService:
 
         escalation_info = self._extract_escalation_info(
             messages
+        )
+
+        logger.info(
+            "Customer request completed | thread_id=%s | escalated=%s | ticket_id=%s",
+            clean_thread_id,
+            escalation_info["escalated"],
+            escalation_info["ticket_id"],
         )
 
         return {
