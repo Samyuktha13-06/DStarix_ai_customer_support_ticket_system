@@ -203,3 +203,106 @@ class Ticket(Base):
     order: Mapped["Order | None"] = relationship(
         back_populates="tickets",
     )
+
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    id: Mapped[str] = mapped_column(
+        String(100),
+        primary_key=True,
+    )
+
+    title: Mapped[str] = mapped_column(
+        String(255),
+        default="New Support Conversation",
+        nullable=False,
+    )
+
+    customer_id: Mapped[int | None] = mapped_column(
+        ForeignKey("customers.id"),
+        nullable=True,
+        index=True,
+    )
+
+    category: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(50),
+        default="active",
+        nullable=False,
+    )
+
+    order_id: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    metadata_json: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    messages: Mapped[list["Message"]] = relationship(
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        order_by="Message.created_at",
+    )
+
+    customer: Mapped["Customer | None"] = relationship()
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    conversation_id: Mapped[str] = mapped_column(
+        ForeignKey("conversations.id"),
+        nullable=False,
+        index=True,
+    )
+
+    sender: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,  # "user", "assistant", "system"
+    )
+
+    content: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    meta_info: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,  # JSON string for order, payment, ticket_id, escalated, tools_used, feedback
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    conversation: Mapped["Conversation"] = relationship(
+        back_populates="messages",
+    )

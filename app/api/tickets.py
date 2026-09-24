@@ -20,6 +20,35 @@ class TicketCreateRequest(BaseModel):
     order_id: int | None = None
 
 
+@router.get("/tickets")
+def list_tickets_api(customer_id: int | None = None):
+    from app.database.models import Ticket
+    try:
+        with SessionLocal() as db:
+            query = db.query(Ticket)
+            if customer_id is not None:
+                query = query.filter(Ticket.customer_id == customer_id)
+            tickets = query.order_by(Ticket.id.desc()).limit(20).all()
+            return [
+                {
+                    "ticket_id": t.id,
+                    "customer_id": t.customer_id,
+                    "order_id": t.order_id,
+                    "subject": t.subject,
+                    "description": t.description,
+                    "priority": t.priority,
+                    "status": t.status,
+                    "created_at": t.created_at.isoformat() if t.created_at else None,
+                }
+                for t in tickets
+            ]
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to list tickets at this time.",
+        )
+
+
 @router.post("/tickets")
 def create_ticket_api(request: TicketCreateRequest):
 
