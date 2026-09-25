@@ -338,7 +338,7 @@ def test_payment_order_issue_escalates():
 def test_chat_response_structure():
     """
     Verify that every successful /chat response contains
-    the complete Phase 8.4 response structure.
+    the complete response structure.
     """
 
     response = client.post(
@@ -357,6 +357,10 @@ def test_chat_response_structure():
         "answer",
         "escalated",
         "ticket_id",
+        "order",
+        "payment",
+        "tools_used",
+        "customer",
     }
 
     assert isinstance(data["answer"], str)

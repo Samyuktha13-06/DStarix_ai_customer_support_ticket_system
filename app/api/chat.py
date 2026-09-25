@@ -3,7 +3,7 @@ import logging
 import re
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 import sys
 from pathlib import Path
 
@@ -36,22 +36,6 @@ class ChatRequest(BaseModel):
     )
 
     customer_id: int | None = None
-
-    @field_validator("message")
-    @classmethod
-    def validate_message(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("Message cannot be empty or contain only whitespace.")
-        return value
-
-    @field_validator("thread_id")
-    @classmethod
-    def validate_thread_id(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("Thread ID cannot be empty or contain only whitespace.")
-        return value
 
 
 class ChatResponse(BaseModel):
@@ -91,6 +75,18 @@ def _generate_title(text: str) -> str:
     response_model=ChatResponse,
 )
 def chat(request: ChatRequest):
+    if not request.message or not request.message.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Customer message cannot be empty.",
+        )
+
+    if not request.thread_id or not request.thread_id.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Thread ID cannot be empty.",
+        )
+
     logger.info(
         "Chat endpoint called | thread_id=%s | customer_id=%s | message_preview=%s",
         request.thread_id,
