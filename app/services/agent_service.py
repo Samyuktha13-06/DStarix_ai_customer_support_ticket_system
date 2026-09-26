@@ -239,17 +239,29 @@ class AgentService:
 
         final_message = messages[-1]
 
+        # Isolate messages produced during the CURRENT turn (from the latest HumanMessage onward)
+        current_turn_messages = []
+        for i in range(len(messages) - 1, -1, -1):
+            msg = messages[i]
+            current_turn_messages.insert(0, msg)
+            if getattr(msg, "type", None) == "human" or msg.__class__.__name__ == "HumanMessage":
+                break
+
         escalation_info = self._extract_escalation_info(
-            messages
+            current_turn_messages
         )
 
         order_info = self._extract_order_info(
+            current_turn_messages,
+            user_message=clean_message,
+            final_answer=final_message.content,
+        ) or self._extract_order_info(
             messages,
             user_message=clean_message,
             final_answer=final_message.content,
         )
 
-        tools_used = self._extract_tools_used(messages)
+        tools_used = self._extract_tools_used(current_turn_messages)
 
         # Extract payment info if order is present
         payment_info = None
