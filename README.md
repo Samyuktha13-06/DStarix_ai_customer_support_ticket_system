@@ -1,5 +1,9 @@
 # NovaCart AI Customer Support & Ticket Automation System
 
+[![Watch Demo Video](https://drive.google.com/file/d/1NcQaHXOyEYbYROHWlxkQ85SyZ2Sw8Djs/view?usp=sharing)]
+
+[![Watch testing video](https://drive.google.com/file/d/1b-GAdWUkG5ZNlqCeJwk9l4Qwng7Z4cE9/view?usp=sharing)]
+
 [![Python Version](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-StateGraph-orange.svg)](https://github.com/langchain-ai/langgraph)
@@ -743,3 +747,4 @@ External Groq API failures are wrapped in custom `AgentLLMError` exceptions. The
 * [ ] **Multimodal Defect Inspection**: Allow customers to upload photos of damaged goods directly in the chat, using vision models (e.g., Llama-3.2-Vision) to assess damage severity before ticket creation.
 * [ ] **External CRM Connectors**: Implement direct webhook synchronization with ticketing platforms like Zendesk, Freshdesk, and Jira Service Management.
 * [ ] **Multilingual Support**: Add automated translation middleware to handle customer inquiries in Hindi, Spanish, and other regional languages.
+
